@@ -1,0 +1,33 @@
+name: Build and Push Container Image
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  IMAGE_NAME: infiniteloopstudio/aztools-kubernetes-clustershutdown
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ env.IMAGE_NAME }}:${GITHUB_REF#refs/tags/v} .
+          docker tag ${{ env.IMAGE_NAME }}:${GITHUB_REF#refs/tags/v} ${{ env.IMAGE_NAME }}:latest
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ env.IMAGE_NAME }}:${GITHUB_REF#refs/tags/v}
+          docker push ${{ env.IMAGE_NAME }}:latest
